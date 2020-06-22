@@ -1,0 +1,192 @@
+syntax enable           " 开启语法高亮
+set t_Co=256            " 开启256色显示`
+set scrolloff=3         " 滚动时保持边距5行
+set number              " 开启行号显示
+set mouse=a             " 开启鼠标
+set cmdheight=1     " 命令行高度 1
+set nocompatible    " 关闭兼容模式
+set confirm             " 在处理未保存或只读文件的时候，弹出确认
+set autoindent          " 自动缩进
+set tabstop=4           " Tab键的宽度
+set expandtab           " 展开tab为空格
+set softtabstop=4       " 统一缩进为4
+set shiftwidth=4
+filetype plugin indent on "打开文件类型检测, 加了这句才可以用智能补全
+set completeopt=longest,menu
+set hlsearch            " 高亮搜索
+set laststatus=1        " 始终显示状态栏
+set encoding=utf-8      "
+set ignorecase          " 搜索忽略大小写
+set nopaste             " 切换到正常模式
+set list lcs=tab:\¦\    " 显示对齐线 | ¦ ┆ │
+set backspace=indent,eol,start
+set clipboard=unnamed   " 设置vim 的粘贴为系统粘贴板
+
+set bg=dark
+set cursorline
+set cursorcolumn
+
+highlight CursorLine cterm=none ctermbg=235
+highlight CursorColumn cterm=none ctermbg=235
+
+" 自动格式化代码
+au BufWrite * :Autoformat
+
+
+" 开启自动补全插件
+" 自动补全配置
+set completeopt=longest,menu "让Vim的补全菜单行为与一般IDE一致(参考VimTip1228)
+autocmd InsertLeave * if pumvisible() == 0|pclose|endif "离开插入模式后自动关闭预览窗口
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<CR>" "回车即选中当前项
+"上下左右键的行为 会显示其他信息
+inoremap <expr> <Down> pumvisible() ? "\<C-n>" : "\<Down>"
+inoremap <expr> <Up> pumvisible() ? "\<C-p>" : "\<Up>"
+inoremap <expr> <PageDown> pumvisible() ? "\<PageDown>\<C-p>\<C-n>" : "\<PageDown>"
+inoremap <expr> <PageUp> pumvisible() ? "\<PageUp>\<C-p>\<C-n>" : "\<PageUp>"
+
+"youcompleteme 默认tab s-tab 和自动补全冲突
+"let g:ycm_key_list_select_completion=['<c-n>']
+let g:ycm_key_list_select_completion = ['<Down>']
+"let g:ycm_key_list_previous_completion=['<c-p>']
+let g:ycm_key_list_previous_completion = ['<Up>']
+
+let g:ycm_global_ycm_extra_conf='~/.vim/bundle/YouCompleteMe/cpp/.ycm_extra_conf.py'
+
+let g:ycm_confirm_extra_conf=0 "关闭加载.ycm_extra_conf.py提示
+
+let g:ycm_collect_identifiers_from_tags_files=1 " 开启 YCM 基于标签引擎
+let g:ycm_min_num_of_chars_for_completion=2 " 从第2个键入字符就开始罗列匹配项
+let g:ycm_cache_omnifunc=0 " 禁止缓存匹配项,每次都重新生成匹配项
+let g:ycm_seed_identifiers_with_syntax=1 " 语法关键字补全
+nnoremap <F5> :YcmForceCompileAndDiagnostics<CR> "force recomile with syntastic
+"nnoremap <leader>lo :lopen<CR> "open locationlist
+"nnoremap <leader>lc :lclose<CR> "close locationlist
+inoremap <leader><leader> <C-x><C-o>
+"在注释输入中也能补全
+let g:ycm_complete_in_comments = 1
+"在字符串输入中也能补全
+let g:ycm_complete_in_strings = 1
+"注释和字符串中的文字也会被收入补全
+let g:ycm_collect_identifiers_from_comments_and_strings = 0
+
+nnoremap <leader>jd :YcmCompleter GoToDefinitionElseDeclaration<CR> " 跳转到定义处
+" 使用补全插件结束/
+
+
+" vim 内进行编译文件并运行
+func! CompileGcc()
+    exec "w"
+    let compilecmd="!gcc "
+    let compileflag="-o %< "
+    if search("mpi\.h") != 0
+        let compilecmd = "!mpicc "
+    endif
+    if search("glut\.h") != 0
+        let compileflag .= " -lglut -lGLU -lGL "
+    endif
+    if search("cv\.h") != 0
+        let compileflag .= " -lcv -lhighgui -lcvaux "
+    endif
+    if search("omp\.h") != 0
+        let compileflag .= " -fopenmp "
+    endif
+    if search("math\.h") != 0
+        let compileflag .= " -lm "
+    endif
+    exec compilecmd." % ".compileflag
+endfunc
+func! CompileGpp()
+    exec "w"
+    let compilecmd="!g++ -std=c++14 -Wc++11-extensions  "
+    let compileflag="-o %< "
+    if search("mpi\.h") != 0
+        let compilecmd = "!mpic++ "
+    endif
+    if search("glut\.h") != 0
+        let compileflag .= " -lglut -lGLU -lGL "
+    endif
+    if search("cv\.h") != 0
+        let compileflag .= " -lcv -lhighgui -lcvaux "
+    endif
+    if search("omp\.h") != 0
+        let compileflag .= " -fopenmp "
+    endif
+    if search("math\.h") != 0
+        let compileflag .= " -lm "
+    endif
+    exec compilecmd." % ".compileflag
+endfunc
+
+func! RunPython()
+    exec "!python %"
+endfunc
+func! CompileJava()
+    exec "!javac %"
+endfunc
+
+func! CompileCode()
+    exec "w"
+    if &filetype == "cpp"
+        exec "call CompileGpp()"
+    elseif &filetype == "c"
+        exec "call CompileGcc()"
+    elseif &filetype == "python"
+        exec "call RunPython()"
+    elseif &filetype == "java"
+        exec "call CompileJava()"
+    endif
+endfunc
+func! RunResult()
+    exec "w"
+    if search("mpi\.h") != 0
+        exec "!mpirun -np 4 ./%<"
+    elseif &filetype == "cpp"
+        exec "! ./%<"
+    elseif &filetype == "c"
+        exec "! ./%<"
+    elseif &filetype == "python"
+        exec "call RunPython"
+    elseif &filetype == "java"
+        exec "!java %<"
+    endif
+endfunc
+map <F5> :call CompileCode()<CR>
+imap <F5> <ESC>:call CompileCode()<CR>
+vmap <F5> <ESC>:call CompileCode()<CR>
+map <F6> :call RunResult()<CR>
+" 结束vim 运行插件
+
+" 开启折叠操作
+set foldenable              " 开始折叠
+set foldmethod=syntax       " 设置语法折叠
+set foldcolumn=0            " 设置折叠区域的宽度
+setlocal foldlevel=1        " 设置折叠层数为
+set foldlevelstart=99       " 打开文件是默认不折叠代码
+
+"set foldclose=all          " 设置为自动关闭折叠
+nnoremap <space> @=((foldclosed(line('.')) < 0) ? 'zc' : 'zo')<CR>
+" 用空格键来开关折叠
+" 折叠块
+
+nmap <C-s> :w!<CR>i
+vmap <C-s> <C-C>:w!<CR>
+imap <C-s> <Esc>:w!<CR>i
+
+
+
+" 使用bundle 作为插件管理
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+Plugin 'VundleVim/Vundle.vim'
+" 代码补全插件
+" Plugin 'Valloric/YouCompleteMe'
+Bundle 'Valloric/YouCompleteMe'
+Plugin 'Chiel92/vim-autoformat'
+call vundle#end()            " required
+filetype plugin indent on    " required
+
+
